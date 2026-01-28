@@ -29,6 +29,18 @@ This project was built incrementally to reflect **real-world DevOps problem solv
 
 ---
 
+## 🔌 Network Ports & Services
+
+| Component        | Port | Purpose                          |
+|------------------|------|----------------------------------|
+| Jenkins          | 8080 | CI/CD Web Interface              |
+| Kubernetes API   | 6443 | Cluster API Server               |
+| Frontend (Nginx) | 80   | User-facing application          |
+| Backend (API)    | 8000 | FastAPI backend service          |
+| PostgreSQL       | 5432 | Database (internal only)         |
+| SSH              | 22   | Server access (IP-restricted)    |
+
+
 ## 📂 Repository Structure
 
 ```text
@@ -87,6 +99,20 @@ Services & deployments separated
 
 Designed for CI-driven deployments
 
+## ⚙️ Environment & Assumptions
+
+- OS: Ubuntu 20.04 / 22.04 LTS
+- Cloud: AWS EC2
+- User: `ubuntu`
+- Access:
+  - SSH key-based authentication
+  - Security groups restrict SSH by IP
+- Tools installed via automation (Ansible):
+  - Docker
+  - kubectl
+  - Jenkins (Docker-based)
+
+
 🔐 Security & Best Practices
 
 Infrastructure defined as code
@@ -118,6 +144,26 @@ Kubernetes cluster setup via Ansible
 Jenkins-driven Kubernetes deployments
 
 Ansible roles refactor
+
+## ✅ Validation & Testing
+
+### Infrastructure
+```bash
+terraform plan
+terraform apply
+Ansible Connectivity
+ansible -i inventory/hosts.ini all -m ping
+Docker
+docker ps
+docker images
+Jenkins
+Access Jenkins UI:
+
+http://<EC2_PUBLIC_IP>:8080
+Kubernetes
+kubectl get nodes
+kubectl get pods -A
+kubectl get svc
 
 👤 Author
 
