@@ -56,6 +56,11 @@ docker-compose.override.yml
 *.crt
 secrets.yaml
 secret.yaml
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.pem
+
 
 # ========================
 # Build / Dist
