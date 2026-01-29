@@ -1,104 +1,164 @@
-🚀 Three‑Tier DevOps Project (EC2 • Jenkins • Docker • Kubernetes • Terraform • Ansible)
-📌 Overview
+🚀 Three-Tier DevOps Project (Terraform + Ansible + Jenkins + Docker + Kubernetes)
+📌 Project Overview
 
-This project demonstrates an end‑to‑end DevOps workflow for deploying a production‑style three‑tier application using Infrastructure as Code, Configuration Management, CI/CD, Containers, and Kubernetes.
+This project demonstrates a production-style DevOps CI/CD pipeline for a three-tier application using modern DevOps tools and best practices.
 
-The goal of this repository is to showcase real‑world DevOps engineering practices, not just a demo app.
+It covers the complete DevOps lifecycle:
 
-🧱 Architecture
+Infrastructure provisioning
 
-High‑level flow:
+Configuration management
 
-Developer → GitHub → Jenkins (CI/CD)
-                 ↓
-            Docker Build
-                 ↓
-            DockerHub
-                 ↓
-            Kubernetes (K3s on EC2)
-Infrastructure
+CI/CD automation
 
-AWS EC2
+Containerization
 
-Jenkins + Kubernetes (K3s) on single EC2
+Kubernetes deployment
 
-Terraform
+The goal is to show real-world DevOps skills, not just theory.
 
-EC2 provisioning
+🏗️ Architecture
+
+Three-Tier Application
+
+Frontend → Nginx (HTML)
+
+Backend → FastAPI (Python)
+
+Database → PostgreSQL
+
+Infrastructure & Tools
+
+AWS EC2 – Compute
+
+Terraform – Infrastructure as Code
+
+Ansible – Configuration Management
+
+Docker – Containerization
+
+K3s (Kubernetes) – Orchestration
+
+Jenkins – CI/CD Automation
+
+Docker Hub – Image Registry
+
+🧱 Infrastructure Layout
+Component	Description
+Main EC2	Jenkins + Docker + K3s (single-node cluster)
+Security	SSH (22), Jenkins (8080), Kubernetes (6443)
+Images	Built & pushed to Docker Hub
+Deployments	Kubernetes manifests
+📂 Repository Structure
+three-tier-devops-project/
+├── Jenkinsfile
+├── README.md
+├── terraform/
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── outputs.tf
+│   ├── provider.tf
+│   └── terraform.tfvars
+├── ansible/
+│   ├── ansible.cfg
+│   ├── inventory/
+│   │   └── hosts.ini
+│   ├── playbooks/
+│   │   └── site.yml
+│   └── roles/
+│       ├── jenkins/
+│       └── k3s/
+├── app/
+│   ├── backend/
+│   ├── frontend/
+│   └── database/
+└── k8s/
+    ├── backend-deploy.yaml
+    ├── backend-svc.yaml
+    ├── frontend-deploy.yaml
+    ├── frontend-svc.yaml
+    ├── postgres-deploy.yaml
+    └── postgres-svc.yaml
+
+⚙️ Stage 1 – Infrastructure (Terraform)
+
+Terraform provisions:
+
+EC2 instance
 
 Security Groups
 
-Ansible
+SSH access
 
-Jenkins installation
+Outputs (Public IP, SSH command)
 
-Docker installation
+Commands
+terraform init
+terraform plan
+terraform apply
 
-K3s bootstrap
+⚙️ Stage 2 – Configuration Management (Ansible)
 
-🧩 Application Layers
-Frontend
+Ansible configures the EC2 instance by:
 
-Nginx‑based static UI
+Installing Docker
 
-Dockerized
+Installing Jenkins
 
-Deployed via Kubernetes Deployment + Service
+Installing K3s (Kubernetes)
 
-Backend
+Configuring kubeconfig for Jenkins & ubuntu user
 
-Python (FastAPI)
+Inventory Example
+[jenkins_k8s]
+jenkins ansible_host=<EC2_PUBLIC_IP> ansible_user=ubuntu
 
-Dockerized REST API
+Run Playbook
+ansible-playbook -i inventory/hosts.ini playbooks/site.yml
 
-Deployed via Kubernetes Deployment + Service
+⚙️ Stage 3 – Containerization (Docker)
 
-Database
+Backend and frontend are containerized
 
-PostgreSQL
+Images are built inside Jenkins
 
-Kubernetes Deployment + Service
+Images are pushed to Docker Hub
 
-⚙️ CI/CD Pipeline (Jenkins)
+Example images:
 
-The pipeline is defined using a Declarative Jenkinsfile and performs the following stages:
+hamid009/backend:latest
+hamid009/frontend:latest
 
-Checkout Code from GitHub
+⚙️ Stage 4 – Kubernetes (K3s)
 
-Build Backend Docker Image
+Kubernetes objects:
 
-Build Frontend Docker Image
+Deployments
 
-Authenticate to DockerHub (Credentials‑based)
+Services
 
-Push Images to DockerHub
+Pods
 
-Deploy to Kubernetes using kubectl
+Verify
+kubectl get nodes
+kubectl get pods
+kubectl get svc
 
-Jenkinsfile Location
-/three-tier-devops-project/Jenkinsfile
-☸️ Kubernetes
+⚙️ Stage 5 – CI/CD Pipeline (Jenkins)
+Jenkinsfile Responsibilities
 
-Distribution: K3s (lightweight Kubernetes)
+Checkout code from GitHub
 
-Cluster Type: Single‑node control plane
+Build backend & frontend Docker images
 
-Manifests Location:
+Login to Docker Hub
 
-/k8s
-Running Pods (Example)
-backend    → Running
-frontend   → Running
-postgres  → Running
-🔐 Security & Credentials
+Push images
 
-DockerHub credentials stored securely in Jenkins Credentials Manager
-
-SSH access restricted via Security Group (CIDR‑based)
-
-No secrets hard‑coded in repository
+Deploy to Kubernetes
 
 🌐 Networking & Ports
+
 | Component        | Port | Purpose                          |
 |------------------|------|----------------------------------|
 | Jenkins          | 8080 | CI/CD Web Interface              |
@@ -108,70 +168,41 @@ No secrets hard‑coded in repository
 | PostgreSQL       | 5432 | Database (internal only)         |
 | SSH              | 22   | Server access (IP-restricted)    |
 
-🧪 Validation & Testing
-Verify Kubernetes
-kubectl get nodes
+
+✅ Validation & Testing
+Kubernetes
 kubectl get pods
-kubectl get svc
-Verify CI/CD
+kubectl get nodes
 
-Trigger Jenkins job
+Jenkins
 
-Confirm Docker images pushed to DockerHub
+Jenkins UI accessible on port 8080
 
-Confirm pods recreated successfully
+Successful pipeline build confirms CI/CD working
 
-📁 Repository Structure
-three-tier-devops-project/
-├── Jenkinsfile
-├── README.md
-├── ansible/
-│   ├── inventory
-│   ├── playbooks
-│   └── roles
-├── terraform/
-├── app/
-│   ├── frontend
-│   ├── backend
-│   └── database
-├── k8s/
-└── jenkins/
-🔁 How a Reviewer Can Test This Project
-Option 1: Review Architecture & Code
+🔐 Security & Best Practices
 
-Inspect Terraform, Ansible, Jenkinsfile, and Kubernetes manifests
+SSH access restricted by IP
 
-Review CI/CD logic and best practices
+Secrets stored in Jenkins Credentials
 
-Option 2: Reproduce on Own AWS Account
+Infrastructure managed via IaC
 
-Clone repository
+No hardcoded passwords in code
 
-Apply Terraform
+Modular Ansible roles
 
-Run Ansible playbooks
+📌 What This Project Demonstrates
 
-Configure Jenkins credentials
-
-Trigger pipeline
-
-🧠 Key DevOps Concepts Demonstrated
-
-Infrastructure as Code (Terraform)
-
-Configuration Management (Ansible)
-
-CI/CD Automation (Jenkins)
-
-Containerization (Docker)
-
-Orchestration (Kubernetes)
-
-Secure credential handling
-
-Real production troubleshooting & fixes
+✔ Real DevOps workflow
+✔ Infrastructure as Code
+✔ Configuration Management
+✔ CI/CD Automation
+✔ Docker & Kubernetes
+✔ Troubleshooting real production issues
 
 👤 Author
 
 Hamid Gurmani
+DevOps Engineer
 GitHub: https://github.com/hamidgurmani
