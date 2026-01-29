@@ -1,0 +1,48 @@
+---
+# tasks file for roles/k3s
+- name: Install K3s (single-node)
+  shell: |
+    curl -sfL https://get.k3s.io | \
+    INSTALL_K3S_EXEC="server --write-kubeconfig-mode 644" sh -
+  args:
+    creates: /usr/local/bin/k3s
+
+- name: Ensure K3s is running
+  service:
+    name: k3s
+    state: started
+    enabled: yes
+- name: Ensure .kube directory exists for ubuntu
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copy kubeconfig for ubuntu user
+  copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+    remote_src: yes
+      
+
+- name: Create .kube directory for ubuntu user
+  file:
+    path: /home/ubuntu/.kube
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copy kubeconfig for ubuntu user
+  copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: /home/ubuntu/.kube/config
+    owner: ubuntu
+    group: ubuntu
+    mode: 0600
+    remote_src: yes

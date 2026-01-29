@@ -15,26 +15,34 @@
     state: directory
     mode: '0755'
 
-- name: Download the new 2026 Jenkins GPG key
+- name: Download Jenkins GPG key
   get_url:
     url: https://pkg.jenkins.io/debian-stable/jenkins.io-2026.key
-    dest: /usr/share/keyrings/jenkins-keyring.asc
+    dest: /tmp/jenkins.key
     mode: '0644'
 
-- name: Add Jenkins repository with modern signed-by method
+- name: Convert Jenkins key to gpg format
+  command: >
+    gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg /tmp/jenkins.key
+  args:
+    creates: /usr/share/keyrings/jenkins-keyring.gpg
+
+- name: Add Jenkins repository
   apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
-    state: present
+    repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/"
     filename: jenkins
+    state: present
     update_cache: yes
 
 - name: Install Jenkins
   apt:
     name: jenkins
     state: present
+    update_cache: yes
 
 - name: Enable and start Jenkins
   systemd:
     name: jenkins
     enabled: yes
     state: started
+
