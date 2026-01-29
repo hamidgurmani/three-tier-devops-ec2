@@ -43,42 +43,6 @@ Jenkins – CI/CD Automation
 
 Docker Hub – Image Registry
 
-🧱 Infrastructure Layout
-Component	Description
-Main EC2	Jenkins + Docker + K3s (single-node cluster)
-Security	SSH (22), Jenkins (8080), Kubernetes (6443)
-Images	Built & pushed to Docker Hub
-Deployments	Kubernetes manifests
-📂 Repository Structure
-three-tier-devops-project/
-├── Jenkinsfile
-├── README.md
-├── terraform/
-│   ├── main.tf
-│   ├── variables.tf
-│   ├── outputs.tf
-│   ├── provider.tf
-│   └── terraform.tfvars
-├── ansible/
-│   ├── ansible.cfg
-│   ├── inventory/
-│   │   └── hosts.ini
-│   ├── playbooks/
-│   │   └── site.yml
-│   └── roles/
-│       ├── jenkins/
-│       └── k3s/
-├── app/
-│   ├── backend/
-│   ├── frontend/
-│   └── database/
-└── k8s/
-    ├── backend-deploy.yaml
-    ├── backend-svc.yaml
-    ├── frontend-deploy.yaml
-    ├── frontend-svc.yaml
-    ├── postgres-deploy.yaml
-    └── postgres-svc.yaml
 
 ⚙️ Stage 1 – Infrastructure (Terraform)
 
