@@ -1,4 +1,4 @@
-name: CI - Build & Test
+name: CI - Build, Test & SonarQube Scan
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
   pull_request:
 
 jobs:
-  backend-test:
-    name: Backend Build & Test
+  backend-test-sonar:
+    name: Backend Test + Sonar Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -28,4 +28,14 @@ jobs:
         run: |
           cd app/backend
           python -c "import app.main; print('Backend OK ✅')"
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=three-tier-devops
+            -Dsonar.sources=app/backend
 
