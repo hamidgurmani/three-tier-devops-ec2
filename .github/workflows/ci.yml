@@ -39,3 +39,16 @@ jobs:
             -Dsonar.projectKey=three-tier-devops
             -Dsonar.sources=app/backend
 
+      - name: Build Backend Docker Image
+        run: |
+          docker build -t three-tier-backend:latest app/backend
+
+      - name: Trivy Scan Backend Image
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: three-tier-backend:latest
+          format: table
+          exit-code: 1
+          severity: CRITICAL,HIGH
+      
+
