@@ -1,98 +1,133 @@
-name: CI - Test, Sonar, Trivy, DockerHub Push
+name: CI/CD - Backend + Frontend + Deploy to k3s
 
 on:
   push:
     branches: ["main"]
-  pull_request:
 
 jobs:
+  
+  #  JOB 1 — Backend CI Pipeline
   backend-ci:
-    name: Backend CI Pipeline
+    name: Backend CI (Test + Sonar + Trivy + Push)
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout Code
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 2. Setup Python Environment
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      # 3. Install Dependencies
       - name: Install Backend Dependencies
         run: |
           cd app/backend
           pip install -r requirements.txt
 
-      # 4. Run Basic Backend Test
-      - name: Run Backend Smoke Test
+      - name: Run Backend Basic Test
         run: |
           cd app/backend
           python -c "import app.main; print('Backend OK ✅')"
 
-      # 5. SonarQube Scan
-      - name: SonarQube Code Quality Scan
+      - name: SonarQube Scan (Backend)
         uses: SonarSource/sonarqube-scan-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args: >
-            -Dsonar.projectKey=three-tier-devops
+            -Dsonar.projectKey=three-tier-backend
             -Dsonar.sources=app/backend
 
-      # 6. Build Docker Image Locally (for scanning)
       - name: Build Backend Docker Image
         run: |
           docker build -t hamid009/three-tier-backend:latest app/backend
 
-      # 7. Trivy Security Scan (Gatekeeper)
-      - name: Trivy Vulnerability Scan
+      - name: Trivy Scan Backend Image
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: hamid009/three-tier-backend:latest
-          format: table
           exit-code: 1
           severity: CRITICAL,HIGH
           trivyignores: .trivyignore
 
-      # 8. Login to DockerHub (Only after scan success)
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 9. Push Image to DockerHub
       - name: Push Backend Image to DockerHub
         run: |
           docker push hamid009/three-tier-backend:latest
-     
-      # 10. Deploy Backend to EC2 Kubernetes (k3s)
-      - name: Deploy Backend to EC2 Kubernetes (k3s)
+
+
+  
+  #  JOB 2 — Frontend CI Pipeline
+
+  frontend-ci:
+    name: Frontend CI (Build + Trivy + Push)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build Frontend Docker Image
+        run: |
+          docker build -t hamid009/three-tier-frontend:latest app/frontend
+
+      - name: Trivy Scan Frontend Image
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: hamid009/three-tier-frontend:latest
+          exit-code: 1
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Push Frontend Image to DockerHub
+        run: |
+          docker push hamid009/three-tier-frontend:latest
+
+
+  
+  #  JOB 3 — Deploy to EC2 k3s (Only if Both Jobs Pass)
+  
+  deploy-to-ec2-k3s:
+    name: Deploy Backend + Frontend to EC2 Kubernetes
+    runs-on: ubuntu-latest
+
+    needs: [backend-ci, frontend-ci]
+
+    steps:
+      - name: Deploy to EC2 using SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "Connected to EC2 ✅"
+            echo "Connected to EC2 "
 
             cd ~/three-tier-devops-ec2
 
-            echo "Pull latest backend image..."
+            echo "Pull latest images..."
             docker pull hamid009/three-tier-backend:latest
+            docker pull hamid009/three-tier-frontend:latest
 
             echo "Apply Kubernetes manifests..."
             kubectl apply -f k8s/
 
-            echo "Restart backend deployment..."
+            echo "Restart deployments..."
             kubectl rollout restart deployment backend
+            kubectl rollout restart deployment frontend
 
-            echo "Backend deployed successfully 🚀"
-    
-
+            echo "Deployment completed successfully"
 

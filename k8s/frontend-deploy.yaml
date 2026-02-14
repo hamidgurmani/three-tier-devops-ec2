@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: hamid009/frontend:2.0
+          image: hamid009/three-tier-frontend:latest
+          imagePullPolicy: Always  
           ports:
             - containerPort: 80
 
