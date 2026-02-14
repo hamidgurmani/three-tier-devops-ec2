@@ -63,7 +63,7 @@ jobs:
         with:
           context: ./app/backend
           push: true
-          tags: hamidgurmani/three-tier-backend:latest
+          tags: hamid009/three-tier-backend:latest
  
       
 
