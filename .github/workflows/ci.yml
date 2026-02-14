@@ -1,35 +1,40 @@
-name: CI - Build, Test & SonarQube Scan
+name: CI - Test, Sonar, Trivy, DockerHub Push
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
 
 jobs:
-  backend-test-sonar:
-    name: Backend Test + Sonar Scan
+  backend-ci:
+    name: Backend CI Pipeline
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      # 1. Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # 2. Setup Python Environment
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
+      # 3. Install Dependencies
       - name: Install Backend Dependencies
         run: |
           cd app/backend
           pip install -r requirements.txt
 
-      - name: Run Backend Basic Test
+      # 4. Run Basic Backend Test
+      - name: Run Backend Smoke Test
         run: |
           cd app/backend
           python -c "import app.main; print('Backend OK ✅')"
 
-      - name: SonarQube Scan
+      # 5. SonarQube Scan
+      - name: SonarQube Code Quality Scan
         uses: SonarSource/sonarqube-scan-action@v2
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -39,31 +44,55 @@ jobs:
             -Dsonar.projectKey=three-tier-devops
             -Dsonar.sources=app/backend
 
+      # 6. Build Docker Image Locally (for scanning)
       - name: Build Backend Docker Image
         run: |
-          docker build -t three-tier-backend:latest app/backend
+          docker build -t hamid009/three-tier-backend:latest app/backend
 
-      - name: Trivy Scan
+      # 7. Trivy Security Scan (Gatekeeper)
+      - name: Trivy Vulnerability Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: three-tier-backend:latest
+          image-ref: hamid009/three-tier-backend:latest
           format: table
           exit-code: 1
           severity: CRITICAL,HIGH
           trivyignores: .trivyignore
 
+      # 8. Login to DockerHub (Only after scan success)
       - name: Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}    
- 
-      - name: Build and Push Backend Image
-        uses: docker/build-push-action@v5
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # 9. Push Image to DockerHub
+      - name: Push Backend Image to DockerHub
+        run: |
+          docker push hamid009/three-tier-backend:latest
+     
+      # 10. Deploy Backend to EC2 Kubernetes (k3s)
+      - name: Deploy Backend to EC2 Kubernetes (k3s)
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          context: ./app/backend
-          push: true
-          tags: hamid009/three-tier-backend:latest
- 
-      
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "Connected to EC2 ✅"
+
+            cd ~/three-tier-devops-ec2
+
+            echo "Pull latest backend image..."
+            docker pull hamid009/three-tier-backend:latest
+
+            echo "Apply Kubernetes manifests..."
+            kubectl apply -f k8s/
+
+            echo "Restart backend deployment..."
+            kubectl rollout restart deployment backend
+
+            echo "Backend deployed successfully 🚀"
+    
+
 
