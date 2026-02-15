@@ -114,6 +114,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            set -e
             echo "Connected to EC2 "
 
             hostname
@@ -127,17 +128,17 @@ jobs:
             docker pull hamid009/three-tier-frontend:latest
 
             echo "Apply Kubernetes manifests..."
-            kubectl apply -f k8s/
+            sudo kubectl apply -f k8s/
 
             echo "Restart deployments..."
-            kubectl rollout restart deployment backend
-            kubectl rollout restart deployment frontend
+            sudo kubectl rollout restart deployment backend
+            sudo kubectl rollout restart deployment frontend
 
             echo "Deploy Done "
 
             echo "Wait for rollout..."
-            kubectl rollout status deployment backend --timeout=120s
-            kubectl rollout status deployment frontend --timeout=120s
+            sudo kubectl rollout status deployment backend --timeout=120s
+            sudo kubectl rollout status deployment frontend --timeout=120s
 
             echo "Deployment completed successfully"
 
