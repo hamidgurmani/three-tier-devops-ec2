@@ -32,17 +32,17 @@
     repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/"
     filename: jenkins
     state: present
+    update_cache: yes   # optional here
+
+# <<< INSERT THE FIX HERE >>>
+- name: Update apt cache after adding Jenkins repo
+  ansible.builtin.apt:
     update_cache: yes
+    cache_valid_time: 3600
 
 - name: Install Jenkins
   apt:
     name: jenkins
     state: present
-    update_cache: yes
 
-- name: Enable and start Jenkins
-  systemd:
-    name: jenkins
-    enabled: yes
-    state: started
 
